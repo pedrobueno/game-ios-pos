@@ -22,7 +22,6 @@
 @synthesize curLevelIndex = _curLevelIndex;
 @synthesize mainScene = _mainScene;
 @synthesize gameOverScene = _gameOverScene;
-@synthesize newLevelScene = _newLevelScene;
 @synthesize levels = _levels;
 
 - (void) removeStartupFlicker
@@ -119,13 +118,10 @@
 	// Load levels
     self.levels = [[[NSMutableArray alloc] init] autorelease];
     Level *level1 = [[[Level alloc] initWithLevelNum:1 spawnRate:2 bgImageName:@"bg.png"] autorelease];
-    Level *level2 = [[[Level alloc] initWithLevelNum:2 spawnRate:1 bgImageName:@"bg2.png"] autorelease];
     [_levels addObject:level1];
-    [_levels addObject:level2];
     self.curLevelIndex = 0;
     
     self.mainScene = [HelloWorldScene scene];
-    self.newLevelScene = [NewLevelScene node];
     self.gameOverScene = [GameOverScene node];
     
     [_mainScene.layer reset];
@@ -172,21 +168,10 @@
 	[[CCDirector sharedDirector] setNextDeltaTimeZero:YES];
 }
 
-- (void)loadGameOverScene {
-    [_gameOverScene.layer.label setString:@"You Lose :["];
+- (void)loadGameOverScene:(int) p {
+    [_gameOverScene.layer.label setString:[NSString stringWithFormat:@"You did %d points", p]];
     [_gameOverScene.layer reset];
     [[CCDirector sharedDirector] replaceScene:_gameOverScene];
-}
-
-- (void)loadWinScene {
-    [_gameOverScene.layer.label setString:@"You Win!"];
-    [_gameOverScene.layer reset];
-    [[CCDirector sharedDirector] replaceScene:_gameOverScene];
-}
-
-- (void)loadNewLevelScene {
-    [_newLevelScene.layer reset];
-    [[CCDirector sharedDirector] replaceScene:_newLevelScene];
 }
 
 - (void)nextLevel {
@@ -197,18 +182,6 @@
 - (void)restartGame {
     _curLevelIndex = 0;
     [self nextLevel];
-}
-
-- (void)levelComplete {    
-    
-    _curLevelIndex++;
-    if (_curLevelIndex >= [_levels count]) {
-        _curLevelIndex = 0;
-        [self loadWinScene];
-    } else {
-        [self loadNewLevelScene];
-    }
-    
 }
 
 - (void)dealloc {

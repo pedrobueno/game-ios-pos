@@ -53,7 +53,7 @@
 		[_targets removeObject:sprite];
 
 		Cocos2DSimpleGameAppDelegate *delegate = [[UIApplication sharedApplication] delegate];
-        [delegate loadGameOverScene];
+        [delegate loadGameOverScene:(int) _score];
 		
 	} else if (sprite.tag == 2) { // projectile
 		[_projectiles removeObject:sprite];
@@ -89,7 +89,6 @@
     self.curBg = bg;
     
     // Reset stats
-    _projectilesDestroyed = 0;
     self.nextProjectile = nil;
     
     // Start up timers again
@@ -107,14 +106,22 @@
     
 	//CCSprite *target = [CCSprite spriteWithFile:@"Target.png" rect:CGRectMake(0, 0, 27, 40)]; 
     Monster *target = nil;
+    int actualX = 0;
+    CGSize winSize = [[CCDirector sharedDirector] winSize];
+    
     if ((arc4random() % 2) == 0) {
         target = [WeakAndFastMonster monster];
     } else {
         target = [StrongAndSlowMonster monster];
     }
 	
+    if ((arc4random() % 10) > 5) {
+        actualX = winSize.width + (target.contentSize.width/2);
+    } else {
+        actualX = - (target.contentSize.width/2);
+    }
+    
 	// Determine where to spawn the target along the Y axis
-	CGSize winSize = [[CCDirector sharedDirector] winSize];
 	int minY = target.contentSize.height/2;
 	int maxY = winSize.height - target.contentSize.height/2;
 	int rangeY = maxY - minY;
@@ -122,7 +129,7 @@
 	
 	// Create the target slightly off-screen along the right edge,
 	// and along a random position along the Y axis as calculated above
-	target.position = ccp(winSize.width + (target.contentSize.width/2), actualY);
+	target.position = ccp(actualX, actualY);
 	[self addChild:target z:1];
 	
 	// Determine speed of the target
@@ -130,11 +137,32 @@
 	int maxDuration = target.maxMoveDuration; //4.0;
 	int rangeDuration = maxDuration - minDuration;
 	int actualDuration = (arc4random() % rangeDuration) + minDuration;
-	
+    
+    //tentativa de rotacionar o zumbi
+    
+    CGPoint location = [[CCDirector sharedDirector] convertToGL:_player.position];
+    
+    // Rotate zombie to the player direction
+    CGPoint playerVector = ccpSub(location, target.position);
+    CGFloat playerAngle = ccpToAngle(playerVector);
+    CGFloat cocosAngle = CC_RADIANS_TO_DEGREES(-1 * playerAngle);
+    
+    CGFloat curAngle = 0;
+    CGFloat rotateDiff = cocosAngle - curAngle;    
+    if (rotateDiff > 180)
+		rotateDiff -= 360;
+	if (rotateDiff < -180)
+		rotateDiff += 360;    
+    CGFloat rotateSpeed = 0.5 / 180; // Would take 0.5 seconds to rotate half a circle
+    CGFloat rotateDuration = fabs(rotateDiff * rotateSpeed);
+    
+    //acabou a rotacao
+    
 	// Create the actions
-	id actionMove = [CCMoveTo actionWithDuration:actualDuration position:ccp(-target.contentSize.width/2, actualY)];
+    id actionRotateTo = [CCRotateTo actionWithDuration:rotateDuration angle:cocosAngle];
+	id actionMove = [CCMoveTo actionWithDuration:actualDuration position:_player.position];
 	id actionMoveDone = [CCCallFuncN actionWithTarget:self selector:@selector(spriteMoveFinished:)];
-	[target runAction:[CCSequence actions:actionMove, actionMoveDone, nil]];
+	[target runAction:[CCSequence actions:actionMove, actionMoveDone, actionRotateTo, nil]];
 	
 	// Add to targets array
 	target.tag = 1;
@@ -175,8 +203,8 @@
 		// and as close to the left side edge as we can get
 		// Remember that position is based on the anchor point, and by default the anchor
 		// point is the middle of the object.
-		_player = [[CCSprite spriteWithFile:@"Player2.png"] retain];
-		_player.position = ccp(_player.contentSize.width/2 + 100, winSize.height/2);
+		_player = [[CCSprite spriteWithFile:@"Player.png"] retain];
+		_player.position = ccp(winSize.width/2, winSize.height/2);
 		[self addChild:_player z:1];
         
         // Set up score and score label
@@ -237,14 +265,7 @@
 		
 		for (CCSprite *target in targetsToDelete) {
 			[_targets removeObject:target];
-			[self removeChild:target cleanup:YES];									
-			_projectilesDestroyed++;
-			if (_projectilesDestroyed > 2) {
-                
-                Cocos2DSimpleGameAppDelegate *delegate = [[UIApplication sharedApplication] delegate];
-                [delegate levelComplete];
-                
-			}
+			[self removeChild:target cleanup:YES];
 		}
 		
 		if (monsterHit) {
@@ -287,7 +308,7 @@
     // Set up initial location of projectile
     //CGSize winSize = [[CCDirector sharedDirector] winSize];
     self.nextProjectile = [[[Projectile alloc] initWithFile:@"Projectile2.png"] autorelease];
-    _nextProjectile.position = _player.position;
+    _nextProjectile.position = ccpAdd(_player.position, ccp(0, 0));//adicionado ccp para fazer o projetil sair do lugar certo
     
     // Rotate player to face shooting direction
     CGPoint shootVector = ccpSub(location, _nextProjectile.position);
@@ -303,11 +324,7 @@
     CGFloat rotateSpeed = 0.5 / 180; // Would take 0.5 seconds to rotate half a circle
     CGFloat rotateDuration = fabs(rotateDiff * rotateSpeed);
     
-    // Move player slightly backwards
-    //CGPoint position = ccpAdd(_player.position, ccp(-10, 0));
-    
     [_player runAction:[CCSequence actions:
-                        //[CCMoveBy actionWithDuration:0.1 position:ccp(-10, 0)],
                         [CCRotateTo actionWithDuration:rotateDuration angle:cocosAngle],
                         [CCCallFunc actionWithTarget:self selector:@selector(finishShoot)],
                         nil]];

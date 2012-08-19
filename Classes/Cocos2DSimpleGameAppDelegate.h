@@ -22,21 +22,17 @@
     NSMutableArray *_levels;
     HelloWorldScene *_mainScene;
     GameOverScene *_gameOverScene;
-    NewLevelScene *_newLevelScene;
 }
 
 @property (nonatomic, assign) int curLevelIndex;
 @property (nonatomic, retain) NSMutableArray *levels;
 @property (nonatomic, retain) CCScene *mainScene;
 @property (nonatomic, retain) GameOverScene *gameOverScene;
-@property (nonatomic, retain) NewLevelScene *newLevelScene;
 @property (nonatomic, retain) UIWindow *window;
 
 - (Level *)curLevel;
 - (void)nextLevel;
-- (void)levelComplete;
 - (void)restartGame;
-- (void)loadGameOverScene;
-- (void)loadWinScene;
+- (void)loadGameOverScene:(int) p;
 
 @end
