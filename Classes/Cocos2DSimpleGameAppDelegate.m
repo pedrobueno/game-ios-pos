@@ -117,7 +117,7 @@
 	
 	// Load levels
     self.levels = [[[NSMutableArray alloc] init] autorelease];
-    Level *level1 = [[[Level alloc] initWithLevelNum:1 spawnRate:2 bgImageName:@"bg.png"] autorelease];
+    Level *level1 = [[[Level alloc] initWithLevelNum:1 spawnRate:2 bgImageName:@"ground3.png"]autorelease];
     [_levels addObject:level1];
     self.curLevelIndex = 0;
     
